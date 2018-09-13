@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main Menu</title>
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.js"
+    integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+
+    <script>
+        jQuery.extend({
+          getQueryParameters : function(str) {
+              return (str || document.location.search).replace(/(^\?)/,'').split("&").map(function(n){return n = n.split("="),this[n[0]] = n[1],this}.bind({}))[0];
+          }
+        });
+    </script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+
+</head>
+<body>
+ <div class="back">
+
+
+        <div class="div-center">
+
+
+          <div class="content">
+
+
+            <h3>ERMS Emergency Resource Management System</h3>
+            <h5 id="usernamePlaceholder">placeholder</h5>
+            <hr />
+
+            <div align="center"><a href="#" onClick="redirect('resource')">Add Resource</a></div>
+            <div align="center"><a href="#" onClick="redirect('incident')">Add Emergency Incident</a></div>
+            <div align="center"><a href="#" onClick="redirect('search')">Search Resources</a></div>
+            <div align="center"><a href="#" onClick="redirect('status')">Resource Status</a></div>
+            <div align="center"><a href="#" onClick="redirect('report')">Resource Report</a></div>
+            <hr />
+            <button class="btn btn-primary" onclick="exit()">Exit</button>
+
+          </div>
+        </div>
+
+              <script>
+              $(function() {
+                    //get username and additional text to display
+                    var data = {};
+                    data.username = $.getQueryParameters().username;
+                    $.ajax({
+                        type: "POST",
+                        url: '/getUserInfo',
+                        data: data,
+                        success: function(res, status){
+                            if(status == "success"){
+                                $('#usernamePlaceholder').html(res.message);
+                            }
+                        }
+                    });
+              });
+            function redirect(redirectUrl){
+                window.location.href = '/'+redirectUrl+window.location.search;
+            }
+            function exit(){
+                window.location.href = '/login';
+            }
+        </script>
+        <style>
+        .back {
+            background: #e2e2e2;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+        }
+
+        .div-center {
+            width: 400px;
+            height: 400px;
+            background-color: #fff;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            max-width: 100%;
+            max-height: 100%;
+            overflow: auto;
+            padding: 1em 2em;
+            border-bottom: 2px solid #ccc;
+            display: table;
+        }
+
+        div.content {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        </style>
+ </div>
+</body>
+</html>

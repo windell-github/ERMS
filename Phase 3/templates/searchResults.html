@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resource Report</title>
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.js"
+    integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+
+    <script>
+        jQuery.extend({
+          getQueryParameters : function(str) {
+              return (str || document.location.search).replace(/(^\?)/,'').split("&").map(function(n){return n = n.split("="),this[n[0]] = n[1],this}.bind({}))[0];
+          }
+        });
+    </script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+
+</head>
+<body style="background: #e2e2e2;">
+
+ <div class="back">
+
+        <div class="div-center">
+
+          <div class="content">
+
+              <label><b>Search Results For Incident:</b></label>
+              <br>
+              <label id="incidentDescription">No Incident Selected</label>
+              <table class="table" id="searhResultsData">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Owner</th>
+                  <th scope="col">Cost</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Next Available</th>
+                  <th scope="col">Distance (km)</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Return Date</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+
+              </tbody>
+            </table>
+              <button class="btn btn-primary" onclick="exit()">Close</button>
+          </div>
+        </div>
+ </div>
+<script>
+              $(function() {
+                    //get username
+                    var data = {};
+                    data.incidentID = $.getQueryParameters().incident;
+                    if($.getQueryParameters().incident != 'null'){
+                      $.ajax({
+                        type: "POST",
+                        url: '/getIncidentName',
+                        data: data,
+                        success: function(res, status){
+                            if(status == "success"){
+                                $('#incidentDescription').text(res.message + ' (' + $.getQueryParameters().incident + ')');
+
+                            }
+                        }
+                      });
+                    }
+
+
+              });
+
+
+
+
+            $(function() {
+              var incident = $.getQueryParameters().incident;
+              if(incident=='null'){
+                $.ajax({
+                  url: '/searchResources' +  document.location.search,
+                  type: "GET",    
+                  dataType:"json", 
+                  success: function(res){
+                    var trHTML = '';
+                    $.each(res, function (key,value) {
+                      trHTML += 
+                        '<tr><td>' + value.idResource + 
+                        '</td><td>' + value.nameResource + 
+                        '</td><td>' + value.owner + 
+                        '</td><td>' + value.cost + 
+                        '</td><td>' + value.status + 
+                        '</td><td>' + value.nextAvailable + 
+                        "</td></tr>";    
+                    });
+                    $('#searhResultsData').append(trHTML)
+                  }
+                });
+              }else{
+                $.ajax({
+                  url: '/searchResources' +  document.location.search,
+                  type: "GET",    
+                  dataType:"json", 
+                  success: function(res){
+                    var trHTML = '';
+                    $.each(res, function (key,value) {
+                      trHTML += 
+                        '<tr><td>' + value.idResource + 
+                        '</td><td>' + value.nameResource + 
+                        '</td><td>' + value.owner + 
+                        '</td><td>' + value.cost + 
+                        '</td><td>' + value.status + 
+                        '</td><td>' + value.nextAvailable +
+                        '</td><td>' + Math.round(value.distance * 100)/100 + 
+                        "</td><td><button id=action" + key + " onclick = 'deploy(" + key +', ' + value.idResource + ")'>" +value.actionText + "</button></td><td><input type ='date' class='form-control' id='date" + key +"' placeholder=''></td></tr>";    
+                    });
+                    $('#searhResultsData').append(trHTML)
+                  }
+                });
+              }
+
+            });
+
+            function deploy(actionId, id) {
+                var data = {};
+                data.username = $.getQueryParameters().username;
+                data.incidentId = $.getQueryParameters().incident;
+                data.date = $('#date' + actionId).val();
+                data.resourceId = id;
+                if(document.getElementById('date' + actionId).value.length == 0){
+                  alert("Expected Return Date is Required!"); 
+                }else{
+                  $.ajax({
+                    type: "POST",
+                    url: '/request',
+                    data: data,
+                    success: function(res, status){
+                        if(status == "success"){
+                            exit();
+                        }
+                    },
+                    error: function(res, status){
+                        if(res.status == 400){
+                            alert("Request Already Pending for this Incident!");
+                        }
+                    }                    
+                  });
+                }
+
+                
+            }
+
+            function exit(){
+                window.location.href = '/main' + window.location.search;
+            }
+        </script>
+        <style>
+        .back {
+            background: #e2e2e2;
+            width: 100%;
+            position: absolute;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .div-center {
+            width: 400px;
+            background-color: #fff;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            max-width: 100%;
+            max-height: 100%;
+            padding: 1em 2em;
+            border-bottom: 2px solid #ccc;
+            display: table;
+        }
+
+        div.content {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        </style>
+</body>
+</html>

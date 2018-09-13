@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Resources</title>
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.js"
+    integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+
+    <script>
+        jQuery.extend({
+          getQueryParameters : function(str) {
+              return (str || document.location.search).replace(/(^\?)/,'').split("&").map(function(n){return n = n.split("="),this[n[0]] = n[1],this}.bind({}))[0];
+          }
+        });
+    </script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+
+</head>
+<body style="background: #e2e2e2;">
+
+ <div class="back">
+
+        <div class="div-center">
+
+          <div class="content">
+
+              <h2>New Resource Information</h2> 
+              <br>
+              <div class="form-group">
+              <label>Resource ID:</label>
+              <br>
+              <label id="resourceId"></label>
+
+              </div>
+              <div class="form-group">
+                  <label>Owner:</label>
+                  <br>
+                  <label id="usernamePlaceholder">placeholder</label>
+              </div>
+
+              <div class="form-group">
+                <label>Resource Name*</label>
+                <input type="text" class="form-control" id="resourceName" placeholder="Resource Name">
+              </div>
+              <div class="form-group">
+                <label>Primary ESF*</label>
+                <select id="primaryESF" name="primaryESF" onChange="addESF()" onfocus="this.selectedIndex = -1;">
+                  <option selected disabled>Please Select Primary ESF</option>
+                  </select>
+              </div>
+              
+
+
+
+              <div class="form-group">
+                <label>Additional ESFs</label>
+                <br>
+                <select id="addESF" name="addESF[]" multiple>
+              </select>
+              </div>
+              <div class="form-group">
+                <label>Model</label>
+                <input type="text" class="form-control" id="model" placeholder="model">
+              </div>
+
+
+
+
+              <!-- code sourced from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_todo -->
+              <div class="header">
+              <label>Capabilities</label>
+              <br>
+              <input type="text" id="myInput" placeholder="Type Capabilities Here">
+              <button onclick="newElement()" class="btn btn-capability">Add</button>
+              </div>
+              <ul id="capabilities">
+              </ul>
+              
+
+              <div class="form-group">
+                <label>Home Location</label>
+              </div>
+              <div>
+                <label>Latitude*</label>
+                <input type="number" min = "-90" max = "90" class="form-control" id="latitude" placeholder="latitude">
+                <label>Only values from -90 to 90!</label>
+                <br>
+                <label>Longitude*</label>
+                <input type="number" min = "-180" max = "180" class="form-control" id="longitude" placeholder="longitude">
+                <label>Only Values from -180 to 180!</label>
+              </div>
+              <div>
+                  <label>Max Distance</label>
+                  <input type="number" min = "0" pattern="\d+" class="form-control" id="maxDistance" placeholder="Max Distance">
+                  <label>km (Positive Values Only!)</label>
+              </div>
+
+              <div>
+                  <label>Cost*</label>
+                  <input type="number" min = "0" class="form-control" id="cost" placeholder="cost">
+                  <label>Postive Values Only!</label>
+                  <br>
+                  <label>per*</label>
+
+                  <select id="costPer" name="costPer" onChange="costPerFlag()">
+                  <option selected disabled>Please Select Cost Increments</option>
+                  </select>
+              </div>
+              <br>
+              <div>
+                  <label>*Required Field</label>
+              </div>              
+              <button class="btn btn-secondary" onclick="cancel()">Cancel</button>
+
+              <button class="btn btn-primary" onclick="save()">Save</button>
+          </div>
+
+        </div>
+
+<script>
+              var capArray = [];
+              primaryEsfBoolean = true;
+              costPerBoolean = true;
+
+              function costPerFlag(){
+                costPerBoolean = false;
+              }
+              $(function() {
+                //get resource ID
+                $.ajax({
+                    type: "GET",
+                    url: '/getResourceID',
+                    success: function(res, status){
+                        if(status == "success"){
+                            $.each(res, function (i, item) {
+                                $('#resourceId').append($('<option>', {
+                                    value: item.resourceID,
+                                    text : item.resourceID
+                                }));
+                            });
+                        }
+                    }
+                });
+            });
+              $(function() {
+                    //get username
+                    var data = {};
+                    data.username = $.getQueryParameters().username;
+                    $.ajax({
+                        type: "POST",
+                        url: '/getUserName',
+                        data: data,
+                        success: function(res, status){
+                            if(status == "success"){
+                                $('#usernamePlaceholder').text(res.message);
+                            }
+                        }
+                    });
+              });
+              $(function() {
+                //get all the esf codes!
+                $.ajax({
+                    type: "GET",
+                    url: '/getESF',
+                    success: function(res, status){
+                        if(status == "success"){
+                            $.each(res, function (i, item) {
+                                $('#primaryESF').append($('<option>', {
+                                    value: item.desg,
+                                    text : item.desc
+                                }));
+                            });
+                        }
+                    }
+                });
+            });
+
+              function addESF() {
+                //get all the additional esf codes!
+                var data = {};
+                data.primaryESF = $('#primaryESF').val();
+                $.ajax({
+                    type: "POST",
+                    url: '/getAddESF',
+                    data: data,
+                    success: function(res, status){
+                        if(status == "success"){
+                            $("#addESF").find('option')
+                                .remove()
+                                .end();
+                            $.each(res, function (i, item) {
+                                $('#addESF').append($('<option>', {
+                                    value: item.desg,
+                                    text : item.desc
+                                }));
+                            });
+                        }
+                    }
+                });
+                primaryEsfFlag();
+            };            
+
+                $(function() {
+                //get all the cost/per values!
+                $.ajax({
+                    type: "GET",
+                    url: '/getCostPer',
+                    success: function(res, status){
+                        if(status == "success"){
+                            $.each(res, function (i, item) {
+                                $('#costPer').append($('<option>', {
+                                    value: item.uOm,
+                                    text : item.uOm
+                                }));
+                            });
+                        }
+                    }
+                });
+            });
+
+
+
+              function primaryEsfFlag(){
+                primaryEsfBoolean = false;
+              }
+              function save(){
+                var data = {};
+                data.username = $.getQueryParameters().username;
+                data.resourceName = $('#resourceName').val();
+
+                data.maxDistance = $('#maxDistance').val();
+                data.model = $('#model').val(); 
+                data.lat = $('#latitude').val();
+                data.long = $('#longitude').val();
+                data.costAmount = $('#cost').val();
+                data.costPer = $('#costPer').val();
+                data.esfPrimaryDescription = $('#primaryESF').val();
+                data.addEsfDescription = $('#addESF').val();
+                data.capabilities = capArray;
+ 
+
+                if(data.maxDistance < 0 ){
+                  alert("Distance must be a positive value!");  
+                }
+                else if(document.getElementById('resourceName').value.length == 0){
+                  alert("Resource Name Required!");
+                }
+                else if(primaryEsfBoolean){
+                  alert("Primary ESF Required!");
+                }
+                else if(document.getElementById('latitude').value.length == 0 || $('#latitude').val() < -90 || $('#latitude').val() > 90){
+                  alert("Latitude must be between -90 and 90");
+                }
+                else if(document.getElementById('longitude').value.length == 0 || $('#longitude').val() < -180 || $('#longitude').val() > 180){
+                  alert("Longitude must be between -180 and 180");
+                }
+                else if(data.costAmount < 0 || document.getElementById('cost').value.length == 0){
+                  alert("Amount must be a positive value!");
+                }
+                else if(costPerBoolean){
+                  alert("Select Cost Per Value!");
+                }
+                else{
+                    $.ajax({
+                      type: "POST",
+                      url: '/insertResource',
+                      data: data,
+                      error: function(){
+                          alert("Incorrect Information, Check Values for Requirements");
+                      },
+                      success: function(res, status){
+                          if(status == "success"){
+                              cancel();
+                        }
+                    }
+                });
+                }
+
+            }
+            function cancel(){
+                window.location.href = '/main' + window.location.search;
+            }
+
+
+
+
+
+          // Create a "close" button and append it to each list item
+          //code sourced from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_todo
+ /*         var myNodelist = document.getElementsByTagName("LI");
+          var i;
+          for (i = 0; i < myNodelist.length; i++) {
+            var span = document.createElement("SPAN");
+            var txt = document.createTextNode("\u00D7");
+            span.className = "close";
+            span.appendChild(txt);
+            myNodelist[i].appendChild(span);
+          }
+
+          // Click on a close button to hide the current list item
+          //code sourced from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_todo
+          var close = document.getElementsByClassName("close");
+          var i;
+          for (i = 0; i < close.length; i++) {
+            close[i].onclick = function() {
+              var div = this.parentElement;
+              capArray.splice( list.indexOf('this.parentElement.value'), 1 );
+              div.style.display = "none";
+            }
+          }*/
+
+
+
+          // Create a new list item when clicking on the "Add" button
+          //code sourced from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_todo
+          function newElement() {
+            var li = document.createElement("li");
+            var inputValue = document.getElementById("myInput").value;
+            capArray.push(inputValue);
+            var t = document.createTextNode(inputValue);
+            li.appendChild(t);
+            li.name = 'capabilities[]'
+            if (inputValue === '') {
+              alert("You must write something!");
+            } else {
+              document.getElementById("capabilities").appendChild(li);
+            }
+            document.getElementById("myInput").value = "";
+
+//            var span = document.createElement("SPAN");
+//            var txt = document.createTextNode("\u00D7");
+            span.className = "close";
+            span.appendChild(txt);
+            li.appendChild(span);
+
+            for (i = 0; i < close.length; i++) {
+              close[i].onclick = function() {
+                var div = this.parentElement;
+                div.style.display = "none";
+              }
+            }
+          }
+        </script>
+        <style>
+        .back {
+            background: #e2e2e2;
+            width: 100%;
+            position: absolute;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .div-center {
+            width: 400px;
+            background-color: #fff;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            max-width: 100%;
+            max-height: 100%;
+            padding: 1em 2em;
+            border-bottom: 2px solid #ccc;
+            display: table;
+        }
+
+        div.content {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        </style>
+</div>
+</body>
+</html>

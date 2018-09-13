@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main Menu</title>
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.js"
+    integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+
+    <script>
+        jQuery.extend({
+          getQueryParameters : function(str) {
+              return (str || document.location.search).replace(/(^\?)/,'').split("&").map(function(n){return n = n.split("="),this[n[0]] = n[1],this}.bind({}))[0];
+          }
+        });
+    </script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+
+</head>
+<body>
+<div><p>Resources in Use</p></div>
+<table id="tableResourcesInUse" class="table table-stripped">
+           <thead>
+               <tr>
+                   <th scope="col">ID</th>
+                   <th scope="col">Resource Name</th>
+                   <th scope="col">Incident</th>
+                   <th scope="col">Owner</th>
+                   <th scope="col">Start Date</th>
+                   <th scope="col">Return By</th>
+                   <th scope="col">Action</th>
+               </tr>
+           </thead>
+            <tbody id="tbodyResourcesInUse">
+
+            </tbody>
+       </table>
+<div><p>Resource Requested by me</p></div>
+<table id="tableResourcesRequested" class="table table-stripped">
+           <thead>
+               <tr>
+                   <th scope="col">ID</th>
+                   <th scope="col">Resource Name</th>
+                   <th scope="col">Incident</th>
+                   <th scope="col">Owner</th>
+                   <th scope="col">Return By</th>
+                   <th scope="col">Action</th>
+               </tr>
+           </thead>
+            <tbody id="tbodyResourcesRequested">
+
+            </tbody>
+       </table>
+<div><p>Resource Requests received by me</p></div>
+<table id="tableRequestsReceived" class="table table-stripped">
+           <thead>
+               <tr>
+                   <th scope="col">ID</th>
+                   <th scope="col">Resource Name</th>
+                   <th scope="col">Incident</th>
+                   <th scope="col">Requesting User</th>
+                   <th scope="col">Return By</th>
+                   <th>Action</th>
+               </tr>
+           </thead>
+            <tbody id="tbodyResourceRequestsReceived">
+
+            </tbody>
+       </table>
+       <button class="btn btn-secondary" onclick="exit()">Exit</button>
+
+<script>
+    //Remove the Resource from ResourcesInUse -- update Resource table with 'AVAILABLE'
+    function onClickReturnResource(id, id_incident) {
+        $.ajax({
+            type: "GET",
+            url: '/returnResource?id=' + id + '&id_incident=' + id_incident
+        });
+        $('#ResourceInUse' + id).parents('tr').remove();
+        window.location.href = '/status'+window.location.search;
+    }
+
+    //Deploy Resource -- Accept Request
+    function onClickDeploy(id, id_incident, username, name, description) {
+      $.ajax({
+            type: "GET",
+            url: '/deployRequest?id=' + id + '&id_incident=' + id_incident + '&username=' + username + '&name=' + name + '&description=' + description
+        });
+        $('#RequestsReceivedDeploy' + id).parents('tr').remove();
+        window.location.href = '/status'+window.location.search;
+      //$(event.target).parents('tr').remove();
+    }
+
+    //Reject Resource -- Deny Request
+    function onClickReject(id_resource, id_incident, username) {
+        $.ajax({
+            type: "GET",
+            url: '/rejectRequest?id_resource=' + id_resource + '&id_incident=' + id_incident + '&username=' + username
+        });
+        $('#RequestsReceivedReject' + id_resource).parents('tr').remove();
+        window.location.href = '/status'+window.location.search;
+    }
+
+    //Cancel Request for Resource -- delete from request table need id_resource and id_incident
+    function onClickCancel(id) {
+        $.ajax({
+            type: "GET",
+            url: '/onClickCancel?id=' +  id + '&username=' +  $.getQueryParameters().username
+        });
+        $('#ResourceRequested' + id).parents('tr').remove();
+        window.location.href = '/status'+window.location.search;
+    }
+
+
+              $(function() {
+                //get the Resources in use!
+                $.ajax({
+                    type: "GET",
+                    url: '/getResourcesInUseInfo?username=' +  $.getQueryParameters().username,
+                    success: function(res, status){
+                        if(status == "success"){
+                                $.each(res, function (i, item) {
+
+                                //var td = "<td>" + '<button id="ResourceInUse' + item.Id + '" onclick="onClickReturnResource(' + item.Id + ')">Return</button>' + "</td></tr>";
+                                var td = "<td>" + '<button id="ResourceInUse' + item.Id + '" onclick="onClickReturnResource(\'' + item.Id  +'\',\'' + item.id_incident + '\')">Return</button>' + "</td></tr>";
+                                onclick="return ReAssign(\'' + valuationId  +'\',\'' + user + '\')"
+                                $('#tbodyResourcesInUse').append(
+                                    '<tr>'+
+                                      '<td>' + item.Id + '</td>'+
+                                      '<td>' + item.name + '</td>'+
+                                      '<td>' + item.description + '</td>'+
+                                      '<td>' + item.owner + '</td>'+
+                                      '<td>' + item.date_deployed + '</td>'+
+                                      '<td>' + item.expected_return_date + '</td>'+
+                                      td +
+                                    '</tr>'
+                                );
+                            });
+                        }
+                    }
+                });
+
+
+                //get the ResourcesRequested!
+                $.ajax({
+                    type: "GET",
+                    url: '/getResourcesRequestedInfo?username=' +  $.getQueryParameters().username,
+                    success: function(res, status){
+                        if(status == "success"){
+                                $.each(res, function (i, item) {
+
+                                var td = "<td>" + '<button id="ResourceRequested' + item.Id + '" onclick="onClickCancel(' + item.Id + ')">Cancel</button>' + "</td></tr>";
+                                $('#tbodyResourcesRequested').append(
+                                    '<tr>'+
+                                      '<td>' + item.Id + '</td>'+
+                                      '<td>' + item.name + '</td>'+
+                                      '<td>' + item.description + '</td>'+
+                                      '<td>' + item.owner + '</td>'+
+                                      '<td>' + item.expected_return_date + '</td>'+
+                                      td +
+                                    '</tr>'
+                                );
+                            });
+                        }
+                    }
+                });
+
+
+
+                //get the ResourceRequestsReceived!
+                $.ajax({
+                    type: "GET",
+                    url: '/getResourceRequestsReceivedInfo?username=' +  $.getQueryParameters().username,
+                    success: function(res, status){
+                        if(status == "success"){
+                                $.each(res, function (i, item) {
+
+                                var td = "<td>" +
+                                    '<button id="RequestsReceivedReject' + item.Id + '" onclick="onClickReject(\'' + item.Id  +'\',\'' + item.id_incident +'\',\'' + item.username + '\')">Reject</button>';
+
+                                if(!item.used)
+                                    td += '<button id="RequestsReceivedDeploy' + item.Id + '" onclick="onClickDeploy(\'' + item.Id  +'\',\'' +item.id_incident +'\',\'' + item.username +'\',\'' + item.name +'\',\'' + item.description + '\')">Deploy</button>';
+
+                                td += "</td></tr>";
+                                $('#tbodyResourceRequestsReceived').append(
+                                    '<tr>'+
+                                      '<td>' + item.Id + '</td>'+
+                                      '<td>' + item.name + '</td>'+
+                                      '<td>' + item.description + '</td>'+
+                                      '<td>' + item.username + '</td>'+
+                                      '<td>' + item.expected_return_date + '</td>'+
+                                      td +
+                                    '</tr>'
+                                );
+                            });
+                        }
+                    }
+                });
+            });
+
+            function exit(){
+                window.location.href = '/main' + window.location.search;
+            }
+        </script>
+        <style>
+        .back {
+            background: #e2e2e2;
+            width: 100%;
+            position: absolute;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .div-center {
+            width: 400px;
+            background-color: #fff;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            max-width: 100%;
+            max-height: 100%;
+            padding: 1em 2em;
+            border-bottom: 2px solid #ccc;
+            display: table;
+        }
+
+        div.content {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        </style>
+</body>
+</html>

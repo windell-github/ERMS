@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resource Report</title>
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.js"
+    integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+
+    <script>
+        jQuery.extend({
+          getQueryParameters : function(str) {
+              return (str || document.location.search).replace(/(^\?)/,'').split("&").map(function(n){return n = n.split("="),this[n[0]] = n[1],this}.bind({}))[0];
+          }
+        });
+    </script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+
+</head>
+<body style="background: #e2e2e2;">
+
+ <div class="back">
+
+        <div class="div-center">
+
+          <div class="content">
+
+              <label><b>Resource Report</b></label>
+
+              <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">ESF#</th>
+                  <th scope="col">Primary Emergency Support Function</th>
+                  <th scope="col">Total Resources</th>
+                  <th scope="col">Resources in Use</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+
+              </tbody>
+            </table>
+              <button class="btn btn-primary" onclick="exit()">Exit</button>
+          </div>
+
+        </div>
+ </div>
+<script>
+              $(function() {
+                //get the report!
+                $.ajax({
+                    type: "GET",
+                    url: '/getReport?username=' +  $.getQueryParameters().username,
+                    success: function(res, status){
+                        if(status == "success"){
+                        var resourceTotal = 0;
+                        var resourceTotalInUse = 0;
+                            $.each(res, function (i, item) {
+                                resourceTotalInUse += item.used;
+                                resourceTotal += item.total;
+
+                                $('#tableBody').append(
+                                    '<tr>'+
+                                      '<td>' + item.esf + '</td>'+
+                                      '<td>' + item.support + '</td>'+
+                                      '<td>' + item.total + '</td>'+
+                                      '<td>' + item.used + '</td>'+
+                                    '</tr>'
+                                );
+                            });
+
+                            $('#tableBody').append(
+                                    '<tr>'+
+                                      '<td></td>'+
+                                      '<td> Total </td>'+
+                                      '<td>' + resourceTotal + '</td>'+
+                                      '<td>' + resourceTotalInUse + '</td>'+
+                                    '</tr>'
+                                );
+                        }
+                    }
+                });
+            });
+
+            function exit(){
+                window.location.href = '/main' + window.location.search;
+            }
+        </script>
+        <style>
+        .back {
+            background: #e2e2e2;
+            width: 100%;
+            position: absolute;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .div-center {
+            width: 400px;
+            background-color: #fff;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            max-width: 100%;
+            max-height: 100%;
+            padding: 1em 2em;
+            border-bottom: 2px solid #ccc;
+            display: table;
+        }
+
+        div.content {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        </style>
+</body>
+</html>

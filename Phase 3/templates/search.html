@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Resource</title>
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.js"
+    integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+
+    <script>
+        jQuery.extend({
+          getQueryParameters : function(str) {
+              return (str || document.location.search).replace(/(^\?)/,'').split("&").map(function(n){return n = n.split("="),this[n[0]] = n[1],this}.bind({}))[0];
+          }
+        });
+    </script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+
+</head>
+<body>
+ <div class="back">
+
+
+        <div class="div-center">
+
+          <div class="content">
+              <div class="form-group">
+                <label>Keyword</label>
+                <input type="text" class="form-control" id="keyword" placeholder="Enter a Keyword">
+              </div>
+              <div class="form-group">
+                <label>ESF</label>
+                  <select id="ESFs" name="esf">
+                    <option selected disabled>Please Select ESF</option>
+                  </select>
+              </div>
+              <div class="form-group">
+                  <label>Location    Within</label>
+                  <input type="text" class="form-control" id="kilometers" placeholder="Please Input Distance">
+                  <label>Kilometers of incident</label>
+              </div>
+              <div class="form-group">
+                <label>Incident</label>
+                <select id="incident" name="incident">
+                    <option selected disabled>Please Select Incident</option>
+                  </select>
+              </div>
+
+              <button class="btn btn-secondary" onclick="exit()">Cancel</button>
+              <button class="btn btn-primary" onclick="search()">Search</button>
+          </div>
+
+        </div>
+ </div>
+<script>
+            $(function() {
+                //get all the esfs!
+                $.ajax({
+                    type: "GET",
+                    url: '/getESF',
+                    success: function(res, status){
+                        if(status == "success"){
+                            $.each(res, function (i, item) {
+                                $('#ESFs').append($('<option>', {
+                                    value: item.desig,
+                                    text : item.desc
+                                }));
+                            });
+                        }
+                    }
+                });
+            });
+            $(function() {
+                data = {}
+                data.username = $.getQueryParameters().username;
+                //get all the incidents
+                $.ajax({
+                    type: "POST",
+                    url: '/getIncidents',
+                    data: data,
+                    success: function(res, status){
+                        if(status == "success"){
+                            $.each(res, function (i, item) {
+                                $('#incident').append($('<option>', {
+                                    value: item.desc,
+                                    text :item.desc + " " + item.desig
+                                }));
+                            });
+                        }
+                    }
+                });
+            });
+            function search(){
+                var data = {};
+                var username = $.getQueryParameters().username;
+                var keyword = $('#keyword').val();
+                var esf = $('#ESFs').val();
+                var kilos = $('#kilometers').val();
+                var incident = $('#incident').val();
+
+                var location = "/searchResults?esf=" + esf + "&keyword=" + keyword + "&kilos=" + kilos + "&incident=" + incident + "&username=" + username
+                window.location.href = location;
+            }
+            function exit(){
+                window.location.href = '/main' + window.location.search;
+            }
+        </script>
+        <style>
+        .back {
+            background: #e2e2e2;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+        }
+
+        .div-center {
+            width: 400px;
+            height: 400px;
+            background-color: #fff;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            max-width: 100%;
+            max-height: 100%;
+            overflow: auto;
+            padding: 1em 2em;
+            border-bottom: 2px solid #ccc;
+            display: table;
+        }
+
+        div.content {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        </style>
+</body>
